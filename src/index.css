@@ -1,0 +1,89 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 144 80% 10%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 144 80% 10%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 9%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 142 71% 45%;
+    --radius: 0.5rem;
+  }
+
+  /* Dark, data-dense theme is the default for the admin panel */
+  .dark {
+    --background: 240 10% 5%;
+    --foreground: 0 0% 95%;
+    --card: 240 8% 8%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 8% 8%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 142 70% 48%;
+    --primary-foreground: 144 80% 6%;
+    --secondary: 240 5% 14%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 5% 14%;
+    --muted-foreground: 240 5% 60%;
+    --accent: 240 5% 16%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 70% 48%;
+    --success-foreground: 144 80% 6%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 48 96% 9%;
+    --border: 240 5% 16%;
+    --input: 240 5% 18%;
+    --ring: 142 70% 48%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+  /* Slim scrollbars for the data-dense layout */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-border;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/40;
+  }
+}
+
+/* react-d3-tree link + node styling overrides */
+.rd3t-link {
+  stroke: hsl(var(--border)) !important;
+  stroke-width: 1.5px;
+}
