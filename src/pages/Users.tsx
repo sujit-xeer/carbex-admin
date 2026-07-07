@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Eye, Search, Ban, RotateCcw, MoreHorizontal } from 'lucide-react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Eye, Search, Ban, RotateCcw, MoreHorizontal, UserSearch } from 'lucide-react';
 import { PageHeader } from '@/components/common/PageHeader';
 import { DataTable, type Column } from '@/components/common/DataTable';
 import { Pagination } from '@/components/common/Pagination';
@@ -140,6 +140,9 @@ export default function UsersPage() {
             <DropdownMenuItem onClick={() => navigate(`/users/${u._id}`)}>
               <Eye className="h-4 w-4" /> View detail
             </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate(`/users/overview/${u.username}`)}>
+              <UserSearch className="h-4 w-4" /> View overview
+            </DropdownMenuItem>
             {u.isSuspended ? (
               <DropdownMenuItem onClick={() => unsuspend.mutate({ userId: u._id })}>
                 <RotateCcw className="h-4 w-4" /> Unsuspend
@@ -157,7 +160,17 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Users" description="Search, filter and manage platform accounts." />
+      <PageHeader
+        title="Users"
+        description="Search, filter and manage platform accounts."
+        actions={
+          <Button variant="outline" asChild>
+            <Link to="/users/overview">
+              <UserSearch className="h-4 w-4" /> User Overview
+            </Link>
+          </Button>
+        }
+      />
 
       <Card className="p-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

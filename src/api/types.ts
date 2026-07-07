@@ -245,6 +245,26 @@ export interface ContractEvent {
   createdAt: string;
 }
 
+// ─── Withdrawals ────────────────────────────────────────────────────────────
+export type WithdrawalStatus = 'pending' | 'completed' | 'expired';
+
+export interface Withdrawal {
+  _id: string;
+  user: { _id: string; walletAddress: string; username: string } | null;
+  walletAddress: string;
+  amount: number;
+  tokenAmount: number;
+  rate: number;
+  amountOnChain: string;
+  nonce: number;
+  expiry: number;
+  signature: string;
+  status: WithdrawalStatus | string;
+  txHash: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Manual stake processing ─────────────────────────────────────────────────
 export interface ProcessedStakeEvent {
   id: string; // `${txHash}:${logIndex}`
@@ -254,6 +274,13 @@ export interface ProcessedStakeEvent {
 }
 
 export interface ProcessStakeResult {
+  txHash: string;
+  blockNumber: number;
+  events: ProcessedStakeEvent[];
+}
+
+// ─── Manual withdrawal processing ────────────────────────────────────────────
+export interface ProcessWithdrawResult {
   txHash: string;
   blockNumber: number;
   events: ProcessedStakeEvent[];
@@ -324,4 +351,188 @@ export type BuySlotResult = BuySlotSuccess | BuySlotFailure;
 
 export interface BuySlotsData {
   results: BuySlotResult[];
+}
+
+// ─── Admin: Slots summary & slot users ──────────────────────────────────────
+export interface SlotSummaryItem {
+  slotNumber: number;
+  amount: number;
+  isActive: boolean;
+  userCount: number;
+}
+
+export interface SlotUser {
+  _id: string;
+  walletAddress: string;
+  username: string;
+  profileImage?: string | null;
+  isActive: boolean;
+  isSuspended: boolean;
+  entryId?: string;
+  bfsIndex: number;
+  level: number;
+  isCompleted: boolean;
+  purchasedAt: string;
+}
+
+export interface SlotUsersData {
+  slot: number;
+  items: SlotUser[];
+  pagination: Pagination;
+}
+
+// ─── Public overview (by username, /overview/:username/*) ──────────────────
+export interface OverviewUser {
+  _id: string;
+  walletAddress: string;
+  username: string;
+  profileImage?: string | null;
+  referralCode: string;
+  role: Role;
+  isActive: boolean;
+  createdAt: string;
+  sponsorWallet?: string | null;
+}
+
+export interface OverviewIncome {
+  referral: number;
+  level: number;
+  clubBonus: number;
+  directPerformance: number;
+  total: number;
+}
+
+export interface OverviewBalance {
+  earned: number;
+  withdrawn: number;
+  available: number;
+}
+
+export interface ClubEligibility {
+  slot6: boolean;
+  slot12: boolean;
+}
+
+export interface OverviewProfile {
+  user: OverviewUser;
+  income: OverviewIncome;
+  balance: OverviewBalance;
+  clubEligibility: ClubEligibility;
+}
+
+export interface OverviewSlotPurchase {
+  _id: string;
+  slot: number;
+  entryId?: string;
+  bfsIndex: number;
+  level: number;
+  isCompleted: boolean;
+  isRebirth: boolean;
+  createdAt: string;
+}
+
+export interface RebirthOfRef {
+  entryId?: string;
+  bfsIndex: number;
+  slot: number;
+  level: number;
+  completedAt?: string | null;
+}
+
+export interface OverviewRebirthRecord {
+  _id: string;
+  slot: number;
+  entryId?: string;
+  bfsIndex: number;
+  level: number;
+  isRebirth: true;
+  rebirthOf?: RebirthOfRef | null;
+  createdAt: string;
+}
+
+export interface RebirthSlotGroup {
+  slot: number;
+  count: number;
+  rebirths: OverviewRebirthRecord[];
+}
+
+export interface OverviewRebirths {
+  totalRebirths: number;
+  slots: RebirthSlotGroup[];
+}
+
+export interface OverviewSlotsData {
+  purchases: OverviewSlotPurchase[];
+  rebirths: OverviewRebirths;
+}
+
+/** Subtree node for /overview/:username/tree/:slot — same shape as the admin SlotTreeNode
+ * plus the referral-relationship flags added by enrichSubtreeFlags(). */
+export interface OverviewSlotTreeNode extends SlotTreeNode {
+  isRebirth?: boolean;
+  isDirect?: boolean;
+  isNormal?: boolean;
+  isSpillover?: boolean;
+  leftChild: OverviewSlotTreeNode | null;
+  rightChild: OverviewSlotTreeNode | null;
+}
+
+export interface OverviewReferralUser {
+  walletAddress: string;
+  username: string;
+  createdAt?: string;
+}
+
+export interface OverviewReferralEntry {
+  level: number;
+  status?: string;
+  referredUser: OverviewReferralUser | null;
+  createdAt: string;
+}
+
+export interface OverviewReferralStats {
+  total: number;
+  active: number;
+  pending: number;
+  inactive: number;
+}
+
+export interface OverviewReferralsData {
+  stats: OverviewReferralStats;
+  tree: OverviewReferralEntry[];
+}
+
+export interface LevelIncomeRecord {
+  _id: string;
+  slot: number;
+  slotAmount: number;
+  level: number;
+  per: number;
+  amount: number;
+  fromUserWallet: string;
+  createdAt: string;
+}
+
+export interface ClubBonusHistoryRecord {
+  _id: string;
+  club: number;
+  incomeName: string;
+  periodStart: string;
+  periodEnd: string;
+  amount: number;
+}
+
+export interface DirectPerformanceHistoryRecord {
+  _id: string;
+  incomeName: string;
+  periodStart: string;
+  periodEnd: string;
+  directCount: number;
+  percentage: number;
+  amount: number;
+}
+
+export interface OverviewIncomeHistory<T> {
+  totalEarned: number;
+  records: T[];
 }

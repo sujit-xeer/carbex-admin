@@ -1,22 +1,27 @@
-import { lazy, Suspense } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
-import { AdminGuard } from '@/auth/AdminGuard';
-import { AppLayout } from '@/components/layout/AppLayout';
-import { LoadingState } from '@/components/common/states';
-import LoginPage from '@/pages/Login';
+import { lazy, Suspense } from "react";
+import { Navigate, Route, Routes } from "react-router-dom";
+import { AdminGuard } from "@/auth/AdminGuard";
+import { AppLayout } from "@/components/layout/AppLayout";
+import { LoadingState } from "@/components/common/states";
+import LoginPage from "@/pages/Login";
 
-const DashboardPage = lazy(() => import('@/pages/Dashboard'));
-const UsersPage = lazy(() => import('@/pages/Users'));
-const UserDetailPage = lazy(() => import('@/pages/UserDetail'));
-const UserManagementPage = lazy(() => import('@/pages/UserManagement'));
-const ReferralsPage = lazy(() => import('@/pages/Referrals'));
-const SlotTreePage = lazy(() => import('@/pages/SlotTree'));
-const SlotPurchasesPage = lazy(() => import('@/pages/SlotPurchases'));
-const IncomePage = lazy(() => import('@/pages/Income'));
-const ActivityPage = lazy(() => import('@/pages/Activity'));
-const OnChainPage = lazy(() => import('@/pages/OnChain'));
-const SettingsPage = lazy(() => import('@/pages/Settings'));
-const NotFoundPage = lazy(() => import('@/pages/NotFound'));
+const DashboardPage = lazy(() => import("@/pages/Dashboard"));
+const UsersPage = lazy(() => import("@/pages/Users"));
+const UserDetailPage = lazy(() => import("@/pages/UserDetail"));
+const UserOverviewSearchPage = lazy(() => import("@/pages/UserOverviewSearch"));
+const UserOverviewPage = lazy(() => import("@/pages/UserOverview"));
+// const UserManagementPage = lazy(() => import("@/pages/UserManagement"));
+const ReferralsPage = lazy(() => import("@/pages/Referrals"));
+const SlotsOverviewPage = lazy(() => import("@/pages/SlotsOverview"));
+const SlotUsersPage = lazy(() => import("@/pages/SlotUsers"));
+const SlotTreePage = lazy(() => import("@/pages/SlotTree"));
+const SlotPurchasesPage = lazy(() => import("@/pages/SlotPurchases"));
+const IncomePage = lazy(() => import("@/pages/Income"));
+const ActivityPage = lazy(() => import("@/pages/Activity"));
+const OnChainPage = lazy(() => import("@/pages/OnChain"));
+const WithdrawalsPage = lazy(() => import("@/pages/Withdrawals"));
+const SettingsPage = lazy(() => import("@/pages/Settings"));
+const NotFoundPage = lazy(() => import("@/pages/NotFound"));
 
 export default function App() {
   return (
@@ -28,14 +33,19 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route index element={<DashboardPage />} />
             <Route path="users" element={<UsersPage />} />
-            <Route path="users/manage" element={<UserManagementPage />} />
+            {/* <Route path="users/manage" element={<UserManagementPage />} /> */}
+            <Route path="users/overview" element={<UserOverviewSearchPage />} />
+            <Route path="users/overview/:username" element={<UserOverviewPage />} />
             <Route path="users/:userId" element={<UserDetailPage />} />
             <Route path="referrals" element={<ReferralsPage />} />
+            <Route path="slots/overview" element={<SlotsOverviewPage />} />
+            <Route path="slots/:slot/users" element={<SlotUsersPage />} />
             <Route path="slots/tree" element={<SlotTreePage />} />
             <Route path="slots/purchases" element={<SlotPurchasesPage />} />
             <Route path="income" element={<IncomePage />} />
             <Route path="activity" element={<ActivityPage />} />
             <Route path="onchain" element={<OnChainPage />} />
+            <Route path="withdrawals" element={<WithdrawalsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>

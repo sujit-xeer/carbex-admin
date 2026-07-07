@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
   SelectContent,
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useContractEvents, useProcessStake } from '@/api/hooks';
+import { useContractEvents, useProcessStake, useProcessWithdraw } from '@/api/hooks';
 import type { ProcessedStakeEvent } from '@/api/types';
 import { formatTokenAmount, readChainEvents } from '@/lib/onchain';
 import { CONTRACT_ADDRESS } from '@/lib/constants';
@@ -76,7 +77,7 @@ export default function OnChainPage() {
         </CardContent>
       </Card>
 
-      <ProcessStakePanel />
+      <ProcessTxCard />
 
       {source === 'backend' ? <BackendEvents onFallback={() => setSource('chain')} /> : <ChainEvents />}
     </div>
@@ -85,9 +86,93 @@ export default function OnChainPage() {
 
 const TXHASH_RE = /^0x[a-fA-F0-9]{64}$/;
 
-function ProcessStakePanel() {
-  const [txHash, setTxHash] = useState('');
+interface ProcessTxResult {
+  txHash: string;
+  blockNumber: number;
+  events: ProcessedStakeEvent[];
+}
+
+interface ProcessTxMutation {
+  mutate: (txHash: string) => void;
+  isPending: boolean;
+  data: ProcessTxResult | undefined;
+}
+
+function ProcessTxCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Cog className="h-4 w-4 text-primary" /> Process a transaction
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="stake">
+          <TabsList>
+            <TabsTrigger value="stake">Stake</TabsTrigger>
+            <TabsTrigger value="withdrawal">Withdrawal</TabsTrigger>
+          </TabsList>
+          <TabsContent value="stake">
+            <ProcessStakeForm />
+          </TabsContent>
+          <TabsContent value="withdrawal">
+            <ProcessWithdrawForm />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ProcessStakeForm() {
   const process = useProcessStake();
+  return (
+    <ProcessTxForm
+      idPrefix="stake"
+      buttonLabel="Process"
+      mutation={process}
+      description={
+        <>
+          Paste an on-chain <code className="rounded bg-muted px-1 py-0.5 text-xs">stake()</code> transaction hash to
+          decode its <span className="font-medium text-foreground">Staked</span> events and place the slot(s).
+          Idempotent — re-processing the same tx is a no-op.
+        </>
+      }
+    />
+  );
+}
+
+function ProcessWithdrawForm() {
+  const process = useProcessWithdraw();
+  return (
+    <ProcessTxForm
+      idPrefix="withdrawal"
+      buttonLabel="Process"
+      mutation={process}
+      description={
+        <>
+          Paste an on-chain transaction hash for a confirmed withdrawal that the backend missed (e.g. monitor
+          downtime) to manually record its{' '}
+          <span className="font-medium text-foreground">Withdrawal</span> event(s). Idempotent — re-processing the
+          same tx is safe.
+        </>
+      }
+    />
+  );
+}
+
+function ProcessTxForm({
+  idPrefix,
+  description,
+  buttonLabel,
+  mutation,
+}: {
+  idPrefix: string;
+  description: React.ReactNode;
+  buttonLabel: string;
+  mutation: ProcessTxMutation;
+}) {
+  const [txHash, setTxHash] = useState('');
 
   const trimmed = txHash.trim();
   const isValid = TXHASH_RE.test(trimmed);
@@ -96,71 +181,60 @@ function ProcessStakePanel() {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!isValid) return;
-    process.mutate(trimmed);
+    mutation.mutate(trimmed);
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Cog className="h-4 w-4 text-primary" /> Process a stake
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <p className="text-sm text-muted-foreground">
-          Paste an on-chain <code className="rounded bg-muted px-1 py-0.5 text-xs">stake()</code> transaction hash to
-          decode its <span className="font-medium text-foreground">Staked</span> events and place the slot(s). Idempotent
-          — re-processing the same tx is a no-op.
-        </p>
-        <form className="flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={submit}>
-          <div className="flex-1 space-y-1">
-            <Label htmlFor="txhash" className="text-xs text-muted-foreground">
-              Transaction hash
-            </Label>
-            <Input
-              id="txhash"
-              placeholder="0x… (32-byte hex)"
-              className="font-mono text-xs"
-              value={txHash}
-              onChange={(e) => setTxHash(e.target.value)}
-              aria-invalid={showError}
-            />
-          </div>
-          <Button type="submit" loading={process.isPending} disabled={!isValid}>
-            <Cog className="h-4 w-4" /> Process
-          </Button>
-        </form>
-        {showError && <p className="text-xs text-destructive">Must be a 32-byte hex hash (0x + 64 hex chars).</p>}
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">{description}</p>
+      <form className="flex flex-col gap-2 sm:flex-row sm:items-end" onSubmit={submit}>
+        <div className="flex-1 space-y-1">
+          <Label htmlFor={`txhash-${idPrefix}`} className="text-xs text-muted-foreground">
+            Transaction hash
+          </Label>
+          <Input
+            id={`txhash-${idPrefix}`}
+            placeholder="0x… (32-byte hex)"
+            className="font-mono text-xs"
+            value={txHash}
+            onChange={(e) => setTxHash(e.target.value)}
+            aria-invalid={showError}
+          />
+        </div>
+        <Button type="submit" loading={mutation.isPending} disabled={!isValid}>
+          <Cog className="h-4 w-4" /> {buttonLabel}
+        </Button>
+      </form>
+      {showError && <p className="text-xs text-destructive">Must be a 32-byte hex hash (0x + 64 hex chars).</p>}
 
-        {process.data && (
-          <div className="space-y-2 rounded-md border bg-muted/20 p-3">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-              <span className="inline-flex items-center gap-1">
-                tx
-                <a
-                  href={bscScanTx(process.data.txHash)}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
-                >
-                  {maskHash(process.data.txHash)}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              </span>
-              <span className="tabular-nums">block {process.data.blockNumber.toLocaleString()}</span>
-              <span>
-                {process.data.events.length} event{process.data.events.length === 1 ? '' : 's'}
-              </span>
-            </div>
-            <ul className="space-y-1.5">
-              {process.data.events.map((ev) => (
-                <ProcessedEventRow key={ev.id} ev={ev} />
-              ))}
-            </ul>
+      {mutation.data && (
+        <div className="space-y-2 rounded-md border bg-muted/20 p-3">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              tx
+              <a
+                href={bscScanTx(mutation.data.txHash)}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-primary hover:underline"
+              >
+                {maskHash(mutation.data.txHash)}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </span>
+            <span className="tabular-nums">block {mutation.data.blockNumber.toLocaleString()}</span>
+            <span>
+              {mutation.data.events.length} event{mutation.data.events.length === 1 ? '' : 's'}
+            </span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <ul className="space-y-1.5">
+            {mutation.data.events.map((ev) => (
+              <ProcessedEventRow key={ev.id} ev={ev} />
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 
